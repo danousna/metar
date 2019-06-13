@@ -5,7 +5,7 @@ from __future__ import print_function
 import json
 import time
 import datetime
-import csv
+import pandas as pd
 from datetime import datetime
 
 import urllib.request as urllib
@@ -31,6 +31,7 @@ def download_data(uri):
     attempt = 0
     while attempt < MAX_ATTEMPTS:
         try:
+            return pd.read_csv(uri)
             #data = urlopen(uri, timeout=300).read().decode('utf-8')
 
             req = urlRequest.Request(uri)
@@ -134,9 +135,11 @@ def download(startts, endts, states):
         uri = '%s&station=%s' % (service, station)
         print('Downloading (%s/%s): %s' % (i,len(stations),station, ))
         data = download_data(uri)
-        cr = csv.DictReader(data)
-        for row in cr:
-            yield parseData(row)
+        print(data)
+
+        #cr = csv.DictReader(data)
+        #for row in cr:
+    #        yield parseData(row)
 
         #outfn = 'data/%s_%s_%s.txt' % (station, startts.strftime("%Y%m%d%H%M"),
         #                          endts.strftime("%Y%m%d%H%M"))
