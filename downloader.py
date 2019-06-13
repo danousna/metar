@@ -5,11 +5,11 @@ from __future__ import print_function
 import json
 import time
 import datetime
-# Python 2 and 3: alternative 4
-try:
-    from urllib.request import urlopen
-except ImportError:
-    from urllib2 import urlopen
+import csv
+
+import urllib.request as urllib
+import urllib.request as urlRequest
+import urllib.parse as urlParse
 
 # Number of attempts to download data
 MAX_ATTEMPTS = 6
@@ -30,9 +30,15 @@ def download_data(uri):
     attempt = 0
     while attempt < MAX_ATTEMPTS:
         try:
-            data = urlopen(uri, timeout=300).read().decode('utf-8')
-            if data is not None and not data.startswith('ERROR'):
-                return data
+            #data = urlopen(uri, timeout=300).read().decode('utf-8')
+
+            req = urlRequest.Request(uri)
+            # open the url
+            x = urlRequest.urlopen(req)
+            data = x.read().decode('utf-8')
+
+            return data.splitlines()
+
         except Exception as exp:
             print("download_data(%s) failed with %s" % (uri, exp))
             time.sleep(5)
@@ -71,7 +77,7 @@ def get_stations_from_networks(states):
     return stations
 
 
-def main(startts, endts, states):
+def download(startts, endts, states):
     """Our main method"""
 
     service = SERVICE + "data=all&tz=Etc/UTC&format=onlycomma&latlon=yes&missing=empty&"
@@ -88,12 +94,16 @@ def main(startts, endts, states):
         uri = '%s&station=%s' % (service, station)
         print('Downloading (%s/%s): %s' % (i,len(stations),station, ))
         data = download_data(uri)
-        outfn = 'data/%s_%s_%s.txt' % (station, startts.strftime("%Y%m%d%H%M"),
-                                  endts.strftime("%Y%m%d%H%M"))
-        out = open(outfn, 'w')
-        out.write(data)
-        out.close()
+        cr = csv.DictReader(data)
+        for row in cr:
+            yield row
+
+        #outfn = 'data/%s_%s_%s.txt' % (station, startts.strftime("%Y%m%d%H%M"),
+        #                          endts.strftime("%Y%m%d%H%M"))
+        #out = open(outfn, 'w')
+        #out.write(data)
+        #out.close()
 
 
-if __name__ == '__main__':
-    main(datetime.datetime(2009, 1, 1), datetime.datetime(2018, 12, 31), "DE")
+#if __name__ == '__main__':
+#    main(datetime.datetime(2009, 1, 1), datetime.datetime(2018, 12, 31), "DE")
