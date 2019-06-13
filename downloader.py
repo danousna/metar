@@ -115,9 +115,9 @@ def download(startts, endts, states):
         uri = '%s&station=%s' % (service, station)
         print('Downloading (%s/%s): %s' % (i,len(stations),station, ))
         data = download_data(uri)
-        cr = csv.DictReader(data, quoting=csv.QUOTE_NONNUMERIC)
+        cr = csv.DictReader(data)
         for row in cr:
-            yield row
+            yield parseData(row)
 
         #outfn = 'data/%s_%s_%s.txt' % (station, startts.strftime("%Y%m%d%H%M"),
         #                          endts.strftime("%Y%m%d%H%M"))
