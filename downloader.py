@@ -70,7 +70,11 @@ def get_stations_from_networks(states):
         # Get metadata
         uri = ("https://mesonet.agron.iastate.edu/"
                "geojson/network/%s.geojson") % (network,)
-        data = urllib(uri)
+        req = urlRequest.Request(uri)
+        # open the url
+        x = urlRequest.urlopen(req)
+        data = x.read().decode('utf-8')
+        
         jdict = json.load(data)
         for site in jdict['features']:
             stations.append(site['properties']['sid'])
