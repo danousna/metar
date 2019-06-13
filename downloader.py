@@ -135,7 +135,7 @@ def download(startts, endts, states):
         uri = '%s&station=%s' % (service, station)
         print('Downloading (%s/%s): %s' % (i,len(stations),station, ))
         data = download_data(uri)
-        print(data)
+        yield data
 
         #cr = csv.DictReader(data)
         #for row in cr:
