@@ -81,11 +81,11 @@ def get_stations_from_networks(states):
             stations.append(site['properties']['sid'])
     return stations
 
-def customFloat(float):
-    if float == '':
+def customFloat(data):
+    if data == '':
         return None
 
-    return float(float)
+    return float(data)
 
 def parseData(data):
 
