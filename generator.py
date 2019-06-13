@@ -41,8 +41,7 @@ def parseData(data):
 
 def loadata(limit = False):
     i = 0
-    os.chdir("data")
-    for file in glob.glob("*.txt"):
+    for file in glob.glob("data/*.txt"):
         with open(file) as f:
             for row in csv.DictReader(f):
                 if not limit or i < limit:
@@ -50,6 +49,3 @@ def loadata(limit = False):
                     yield parseData(row)
                 else:
                     break
-
-for r in loadata(300):
-    print(r)
