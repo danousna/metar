@@ -135,6 +135,7 @@ def download(startts, endts, states):
         uri = '%s&station=%s' % (service, station)
         print('Downloading (%s/%s): %s' % (i,len(stations),station, ))
         data = download_data(uri)
+<<<<<<< HEAD:downloader.py
         yield data
 
         #cr = csv.DictReader(data)
@@ -146,6 +147,13 @@ def download(startts, endts, states):
         #out = open(outfn, 'w')
         #out.write(data)
         #out.close()
+=======
+        outfn = 'data/%s_%s_%s.csv' % (station, startts.strftime("%Y%m%d%H%M"),
+                                  endts.strftime("%Y%m%d%H%M"))
+        out = open(outfn, 'w')
+        out.write(data)
+        out.close()
+>>>>>>> reset:download-data.py
 
 
 #if __name__ == '__main__':
