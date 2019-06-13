@@ -6,7 +6,6 @@ import json
 import time
 import datetime
 import csv
-import re
 from datetime import datetime
 
 import urllib.request as urllib
@@ -82,11 +81,6 @@ def get_stations_from_networks(states):
             stations.append(site['properties']['sid'])
     return stations
 
-OrderedDict([('station', 'EDAC'), ('valid', '2013-04-09 07:50'), ('lon', '12.5064'), ('lat', '50.9818'), ('tmpf', '42.80'), ('dwpf', '32.00'), ('relh', '65.38'), ('drct', '150.00'), ('sknt', '5.00'), ('p01i', '0.00'), ('alti', '29.68'), ('mslp', ''), ('vsby', '6.21'), ('gust', ''), ('skyc1', 'BKN'), ('skyc2', ''), ('skyc3', ''), ('skyc4', ''), ('skyl1', '4800.00'), ('skyl2', ''), ('skyl3', ''), ('skyl4', ''), ('wxcodes', ''), ('ice_accretion_1hr', ''), ('ice_accretion_3hr', ''), ('ice_accretion_6hr', ''), ('peak_wind_gust', ''), ('peak_wind_drct', ''), ('peak_wind_time', ''), ('feel', '39.22'), ('metar', 'EDAC 090750Z 15005KT 120V190 9999 BKN048 06/M00 Q1005')])
-
-dateparser = re.compile(
-    "(?P<year>\d+)-(?P<month>\d+)-(?P<day>\d+) (?P<hour>\d+):(?P<minute>\d+):(?P<seconds>\d+\.?\d*)"
-)
 
 def parseData(data):
 
