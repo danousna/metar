@@ -81,20 +81,39 @@ def get_stations_from_networks(states):
             stations.append(site['properties']['sid'])
     return stations
 
+def customFloat(float):
+    if float == '':
+        return None
+
+    return float(float)
 
 def parseData(data):
 
     data['valid'] = datetime.strptime(data['valid'], '%Y-%m-%d %H:%M')
-    data['lon'] = float(data['lon'])
-    data['lat'] = float(data['lat'])
-    data['feel'] = float(data['feel'])
-    data['tmpf'] = float(data['tmpf'])
-    data['dwpf'] = float(data['dwpf'])
-    data['relh'] = float(data['relh'])
-    data['drct'] = float(data['drct'])
-    data['sknt'] = float(data['sknt'])
-    data['p01i'] = float(data['p01i'])
-    data['alti'] = float(data['alti'])
+    data['tmpf'] = customFloat(data['tmpf'])
+    data['dwpf'] = customFloat(data['dwpf'])
+    data['relh'] = customFloat(data['relh'])
+    data['drct'] = customFloat(data['drct'])
+    data['sknt'] = customFloat(data['sknt'])
+    data['p01i'] = customFloat(data['p01i'])
+    data['alti'] = customFloat(data['alti'])
+    data['mslp'] = customFloat(data['mslp'])
+    data['vsby'] = customFloat(data['vsby'])
+    data['gust'] = customFloat(data['gust'])
+    data['skyl1'] = customFloat(data['skyl1'])
+    data['skyl2'] = customFloat(data['skyl2'])
+    data['skyl3'] = customFloat(data['skyl3'])
+    data['skyl4'] = customFloat(data['skyl4'])
+    data['feel'] = customFloat(data['feel'])
+
+    data['lon'] = customFloat(data['lon'])
+    data['lat'] = customFloat(data['lat'])
+
+    data['ice_accretion_1hr'] = customFloat(data['ice_accretion_1hr'])
+    data['ice_accretion_3hr'] = customFloat(data['ice_accretion_3hr'])
+    data['ice_accretion_6hr'] = customFloat(data['ice_accretion_6hr'])
+    data['peak_wind_gust'] = customFloat(data['peak_wind_gust'])
+    data['peak_wind_drct'] = customFloat(data['peak_wind_drct'])
 
     return data
 
