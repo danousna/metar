@@ -88,7 +88,7 @@ def main(startts, endts, states):
         uri = '%s&station=%s' % (service, station)
         print('Downloading (%s/%s): %s' % (i,len(stations),station, ))
         data = download_data(uri)
-        outfn = 'data/%s_%s_%s.txt' % (station, startts.strftime("%Y%m%d%H%M"),
+        outfn = 'data/%s_%s_%s.csv' % (station, startts.strftime("%Y%m%d%H%M"),
                                   endts.strftime("%Y%m%d%H%M"))
         out = open(outfn, 'w')
         out.write(data)
