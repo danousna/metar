@@ -8,7 +8,7 @@ def format_insert_query(table, data, mapping):
     columns = []
     values = []
     for col, value in data.items():
-        if value is not None or value != '' and value != 'None':
+        if value is not None and value != '':
             if col in mapping:
                 columns.append(mapping[col])
             else:
