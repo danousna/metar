@@ -7,3 +7,9 @@ Les données à analyser sont théoriquement celle de l'Allemagne sur la périod
 - `virtualenv venv`
 - `source venv/bin/activate`
 - `pip install -r requirements.txt`
+
+## Cassandra
+
+- `ssh [login]@nf26-3.leger.tf`
+- `cqlsh`
+- `use use danousna_metar ;`

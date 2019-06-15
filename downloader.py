@@ -1,10 +1,8 @@
 """
 Example script that scrapes data from the IEM ASOS download service
 """
-from __future__ import print_function
 import json
 import time
-import datetime
 import pandas as pd
 from datetime import datetime
 
@@ -31,16 +29,7 @@ def download_data(uri):
     attempt = 0
     while attempt < MAX_ATTEMPTS:
         try:
-            return pd.read_csv(uri)
-            #data = urlopen(uri, timeout=300).read().decode('utf-8')
-
-            req = urlRequest.Request(uri)
-            # open the url
-            x = urlRequest.urlopen(req)
-            data = x.read().decode('utf-8')
-
-            return data.splitlines()
-
+            return pd.read_csv(uri).T.to_dict()
         except Exception as exp:
             print("download_data(%s) failed with %s" % (uri, exp))
             time.sleep(5)
@@ -48,16 +37,6 @@ def download_data(uri):
 
     print("Exhausted attempts to download, returning empty data")
     return ""
-
-
-def get_stations_from_filelist(filename):
-    """Build a listing of stations from a simple file listing the stations.
-    The file should simply have one station per line.
-    """
-    stations = []
-    for line in open(filename):
-        stations.append(line.strip())
-    return stations
 
 
 def get_stations_from_networks(states):
@@ -82,39 +61,40 @@ def get_stations_from_networks(states):
             stations.append(site['properties']['sid'])
     return stations
 
-def customFloat(data):
+
+def floatCast(data):
     if data == '':
         return None
 
     return float(data)
 
+
 def parseData(data):
-
     data['valid'] = datetime.strptime(data['valid'], '%Y-%m-%d %H:%M')
-    data['tmpf'] = customFloat(data['tmpf'])
-    data['dwpf'] = customFloat(data['dwpf'])
-    data['relh'] = customFloat(data['relh'])
-    data['drct'] = customFloat(data['drct'])
-    data['sknt'] = customFloat(data['sknt'])
-    data['p01i'] = customFloat(data['p01i'])
-    data['alti'] = customFloat(data['alti'])
-    data['mslp'] = customFloat(data['mslp'])
-    data['vsby'] = customFloat(data['vsby'])
-    data['gust'] = customFloat(data['gust'])
-    data['skyl1'] = customFloat(data['skyl1'])
-    data['skyl2'] = customFloat(data['skyl2'])
-    data['skyl3'] = customFloat(data['skyl3'])
-    data['skyl4'] = customFloat(data['skyl4'])
-    data['feel'] = customFloat(data['feel'])
+    data['tmpf'] = floatCast(data['tmpf'])
+    data['dwpf'] = floatCast(data['dwpf'])
+    data['relh'] = floatCast(data['relh'])
+    data['drct'] = floatCast(data['drct'])
+    data['sknt'] = floatCast(data['sknt'])
+    data['p01i'] = floatCast(data['p01i'])
+    data['alti'] = floatCast(data['alti'])
+    data['mslp'] = floatCast(data['mslp'])
+    data['vsby'] = floatCast(data['vsby'])
+    data['gust'] = floatCast(data['gust'])
+    data['skyl1'] = floatCast(data['skyl1'])
+    data['skyl2'] = floatCast(data['skyl2'])
+    data['skyl3'] = floatCast(data['skyl3'])
+    data['skyl4'] = floatCast(data['skyl4'])
+    data['feel'] = floatCast(data['feel'])
 
-    data['lon'] = customFloat(data['lon'])
-    data['lat'] = customFloat(data['lat'])
+    data['lon'] = floatCast(data['lon'])
+    data['lat'] = floatCast(data['lat'])
 
-    data['ice_accretion_1hr'] = customFloat(data['ice_accretion_1hr'])
-    data['ice_accretion_3hr'] = customFloat(data['ice_accretion_3hr'])
-    data['ice_accretion_6hr'] = customFloat(data['ice_accretion_6hr'])
-    data['peak_wind_gust'] = customFloat(data['peak_wind_gust'])
-    data['peak_wind_drct'] = customFloat(data['peak_wind_drct'])
+    data['ice_accretion_1hr'] = floatCast(data['ice_accretion_1hr'])
+    data['ice_accretion_3hr'] = floatCast(data['ice_accretion_3hr'])
+    data['ice_accretion_6hr'] = floatCast(data['ice_accretion_6hr'])
+    data['peak_wind_gust'] = floatCast(data['peak_wind_gust'])
+    data['peak_wind_drct'] = floatCast(data['peak_wind_drct'])
 
     return data
 
@@ -126,35 +106,17 @@ def download(startts, endts, states):
     service += startts.strftime('year1=%Y&month1=%m&day1=%d&')
     service += endts.strftime('year2=%Y&month2=%m&day2=%d&')
 
-    # Two examples of how to specify a list of stations
     stations = get_stations_from_networks(states)
-    # stations = get_stations_from_filelist("mystations.txt")
     i = 0
     for station in stations:
         i+=1
         uri = '%s&station=%s' % (service, station)
         print('Downloading (%s/%s): %s' % (i,len(stations),station, ))
         data = download_data(uri)
-<<<<<<< HEAD:downloader.py
-        yield data
 
-        #cr = csv.DictReader(data)
-        #for row in cr:
-    #        yield parseData(row)
+        yield data[0]
 
-        #outfn = 'data/%s_%s_%s.txt' % (station, startts.strftime("%Y%m%d%H%M"),
-        #                          endts.strftime("%Y%m%d%H%M"))
-        #out = open(outfn, 'w')
-        #out.write(data)
-        #out.close()
-=======
-        outfn = 'data/%s_%s_%s.csv' % (station, startts.strftime("%Y%m%d%H%M"),
-                                  endts.strftime("%Y%m%d%H%M"))
-        out = open(outfn, 'w')
-        out.write(data)
-        out.close()
->>>>>>> reset:download-data.py
+data = download(datetime(2006, 1, 1), datetime(2015, 12, 31), "IE")
 
-
-#if __name__ == '__main__':
-#    main(datetime.datetime(2009, 1, 1), datetime.datetime(2018, 12, 31), "DE")
+for item in data:
+    print(item)
