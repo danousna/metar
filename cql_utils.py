@@ -1,8 +1,5 @@
 import datetime
 
-import cassandra.cluster
-import generator
-
 
 def format_insert_query(table, data, mapping):
     columns = []
@@ -25,15 +22,6 @@ def format_insert_query(table, data, mapping):
     return "INSERT INTO {} ({}) VALUES ({})".format(table, ', '.join(columns), ', '.join(values))
 
 
-c = cassandra.cluster.Cluster(['localhost'])
-ks = c.connect('chembise_metar_1_12')
-
-data = generator.loadata(100)
-
-for row in data:
-    print(format_insert_query("date_by_location", row, {
-        'valid': 'daytime'
-    }))
 
 """
 for row in data:

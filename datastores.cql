@@ -2,7 +2,7 @@ CREATE KEYSPACE IF NOT EXISTS chembise_metar_1_12 WITH replication = {'class': '
 
 CREATE TABLE IF NOT EXISTS date_by_location (
     station text,
-    daytime date,
+    daytime timestamp,
     lon decimal ,
     lat decimal ,
     tmpf decimal,
