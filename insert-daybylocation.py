@@ -19,7 +19,7 @@ def format_insert_query(table, data, mapping):
             elif isinstance(value, datetime.datetime):
                 values.append(value.strftime("%Y-%m-d %H:%M:%S"))
             else:
-                values.append(value)
+                values.append(str(value))
 
     return "INSERT INTO {} ({}) VALUES ({})".format(table, ', '.join(columns), ', '.join(values))
 
