@@ -9,6 +9,7 @@ def customFloat(data):
 
     return float(data)
 
+
 def parseData(data):
     data['valid'] = datetime.strptime(data['valid'], '%Y-%m-%d %H:%M')
     data['tmpf'] = customFloat(data['tmpf'])
@@ -38,9 +39,11 @@ def parseData(data):
 
     return data
 
-def loadata(limit = False):
+
+def loadata(limit=False):
     i = 0
-    for file in glob.glob("data/*.txt"):
+    os.chdir("data")
+    for file in glob.glob("*.csv"):
         with open(file) as f:
             for row in csv.DictReader(f):
                 if not limit or i < limit:
@@ -48,3 +51,37 @@ def loadata(limit = False):
                     yield parseData(row)
                 else:
                     break
+    os.chdir("../")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
