@@ -10,7 +10,6 @@ def customFloat(data):
     return float(data)
 
 def parseData(data):
-
     data['valid'] = datetime.strptime(data['valid'], '%Y-%m-%d %H:%M')
     data['tmpf'] = customFloat(data['tmpf'])
     data['dwpf'] = customFloat(data['dwpf'])
