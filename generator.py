@@ -3,14 +3,15 @@ import re
 import glob, os
 from datetime import datetime
 
+
 def customFloat(data):
     if data == '':
         return None
 
     return float(data)
 
-def parseData(data):
 
+def parseData(data):
     data['valid'] = datetime.strptime(data['valid'], '%Y-%m-%d %H:%M')
     data['tmpf'] = customFloat(data['tmpf'])
     data['dwpf'] = customFloat(data['dwpf'])
@@ -39,9 +40,11 @@ def parseData(data):
 
     return data
 
-def loadata(limit = False):
+
+def loadata(limit=False):
     i = 0
-    for file in glob.glob("data/*.txt"):
+    os.chdir("data")
+    for file in glob.glob("*.csv"):
         with open(file) as f:
             for row in csv.DictReader(f):
                 if not limit or i < limit:
@@ -49,3 +52,4 @@ def loadata(limit = False):
                     yield parseData(row)
                 else:
                     break
+    os.chdir("../")
