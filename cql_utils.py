@@ -1,6 +1,19 @@
 import datetime
 
 
+def split_daytime(row):
+    row['year'] = int(row['valid'].strftime("%Y"))
+    row['month'] = int(row['valid'].strftime("%m"))
+    row['day'] = int(row['valid'].strftime("%d"))
+    row['hour'] = int(row['valid'].strftime("%H"))
+    row['minute'] = int(row['valid'].strftime("%M"))
+    row['second'] = int(row['valid'].strftime("%S"))
+
+    row['valid'] = None
+
+    return row
+
+
 def format_insert_query(table, data, mapping):
     columns = []
     values = []
