@@ -17,7 +17,7 @@ def format_insert_query(table, data, mapping):
             if isinstance(value, str):
                 values.append("'"+value+"'")
             elif isinstance(value, datetime.datetime):
-                values.append(value.strftime("%Y-%m-d %H:%M:%S"))
+                values.append("'"+value.strftime("%Y-%m-%d %H:%M:%S")+"'")
             else:
                 values.append(str(value))
 
