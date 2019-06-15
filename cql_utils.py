@@ -14,7 +14,7 @@ def split_daytime(row):
     return row
 
 
-def format_insert_query(table, data, mapping):
+def format_insert_query(table, data, mapping = {}):
     columns = []
     values = []
     for col, value in data.items():
