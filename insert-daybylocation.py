@@ -8,7 +8,7 @@ def format_insert_query(table, data, mapping):
     columns = []
     values = []
     for col, value in data.items():
-        if value is not None or value != '':
+        if value is not None or value != '' and value != 'None':
             if col in mapping:
                 columns.append(mapping[col])
             else:
@@ -20,6 +20,7 @@ def format_insert_query(table, data, mapping):
                 values.append("'"+value.strftime("%Y-%m-%d %H:%M:%S")+"'")
             else:
                 values.append(str(value))
+
 
     return "INSERT INTO {} ({}) VALUES ({})".format(table, ', '.join(columns), ', '.join(values))
 
