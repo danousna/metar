@@ -80,7 +80,7 @@ def main(startts, endts, states):
         data = download_data(uri)
         outfn = 'data/%s_%s_%s.csv' % (station, startts.strftime("%Y%m%d%H%M"),
                                   endts.strftime("%Y%m%d%H%M"))
-        out = open(outfn, 'w')
+        out = open(outfn, 'w+')
         out.write(data)
         out.close()
 
