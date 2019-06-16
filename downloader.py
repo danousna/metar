@@ -42,16 +42,6 @@ def download_data(uri):
     return ""
 
 
-def get_stations_from_filelist(filename):
-    """Build a listing of stations from a simple file listing the stations.
-    The file should simply have one station per line.
-    """
-    stations = []
-    for line in open(filename):
-        stations.append(line.strip())
-    return stations
-
-
 def get_stations_from_networks(states):
     """Build a station list by using a bunch of IEM networks."""
     stations = []
@@ -90,7 +80,7 @@ def main(startts, endts, states):
         data = download_data(uri)
         outfn = 'data/%s_%s_%s.csv' % (station, startts.strftime("%Y%m%d%H%M"),
                                   endts.strftime("%Y%m%d%H%M"))
-        out = open(outfn, 'w')
+        out = open(outfn, 'w+')
         out.write(data)
         out.close()
 

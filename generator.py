@@ -3,7 +3,6 @@ import re
 import glob, os
 from datetime import datetime
 
-
 def customFloat(data):
     if data == '':
         return None
