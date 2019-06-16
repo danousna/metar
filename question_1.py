@@ -45,7 +45,6 @@ def get_all():
 
         avg[i] = tmp_sum / tmp_len
 
-    print(avg)
     data['avg'] = avg
 
     return data
