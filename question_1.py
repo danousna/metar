@@ -15,26 +15,35 @@ def get_points(year):
     print(query)
     results = cluster.execute(query)
 
-    data = [np.nan for i in range(365)]
+    data = [None for i in range(366)]
 
     for result in results:
         day = datetime.strptime(str(year) + '-' + str(result.month) + '-' + str(result.day), '%Y-%m-%d').timetuple().tm_yday
-        data[day] = float((result.tmpf - 32) * 5/9)  # Convert to Celsius
+        try:
+            data[day - 1] = float((result.tmpf - 32) * 5/9)  # Convert to Celsius
+        except IndexError:
+            print("Could not insert day {} with value {}".format(day, (result.tmpf - 32) * 5/9))
 
     return data
 
 
 def get_all():
     data = { '2009': [], '2010': [], '2011': [], '2012': [], '2013': [], '2014': [], '2015': [], '2016': [], '2017': [], '2018': [] }
-    avg = [np.nan for i in range(365)]
+    avg = [None for i in range(366)]
 
     for year in data.keys():
         data[year] = get_points(year)
     
-    data_flattened = [data[year] for year in data.keys()]
-    tmp = np.array([avg, data_flattened])
-    print(tmp)
-    avg = np.nanmean(tmp, axis = 0).tolist()
+    for i in range(366):
+        tmp_len = 0
+        tmp_sum = 0
+
+        for year in data.keys():
+            if data[year][i] != None:
+                tmp_len = tmp_len + 1
+                tmp_sum = tmp_sum + data[year][i]
+
+        avg[i] = tmp_sum / tmp_len
 
     print(avg)
     data['avg'] = avg
@@ -44,5 +53,5 @@ def get_all():
 
 data = get_all()
 plt.plot(data['avg'])
-plt.plot(data['2009'])
+plt.plot(data['2011'])
 plt.savefig('temperatures.png')
