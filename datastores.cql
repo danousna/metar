@@ -40,3 +40,44 @@ CREATE TABLE IF NOT EXISTS date_by_location (
 
     PRIMARY KEY ((lat, lon), year, month, day, hour, minute, second)
 );
+
+CREATE TABLE IF NOT EXISTS data_by_datetime (
+    station text,
+    year int,
+    month int,
+    day int,
+    hour int,
+    minute int,
+    second int,
+    lon decimal ,
+    lat decimal ,
+    tmpf decimal,
+    dwpf decimal,
+    relh decimal,
+    drct decimal,
+    sknt decimal,
+    p01i decimal,
+    alti decimal,
+    mslp decimal,
+    vsby decimal,
+    gust decimal,
+    skyc1 text,
+    skyc2 text,
+    skyc3 text,
+    skyc4 text,
+    skyl1 decimal,
+    skyl2 decimal,
+    skyl3 decimal,
+    skyl4 decimal,
+    wxcodes text,
+    ice_accretion_1hr decimal,
+    ice_accretion_3hr decimal,
+    ice_accretion_6hr decimal,
+    peak_wind_gust decimal,
+    peak_wind_drct decimal,
+    peak_wind_time text,
+    feel decimal,
+    metar text,
+
+    PRIMARY KEY ((year, month), day, hour, minute, second, lat, lon, station)
+);
