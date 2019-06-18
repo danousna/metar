@@ -11,7 +11,7 @@ cluster = cluster.connect('chembise_metar_1_12')
 
 def get_points(year, lon, lat):
     global cluster
-    query = "SELECT month, day, AVG(tmpf) AS tmpf FROM date_by_location WHERE lat = {} AND lon = {} AND year = {} GROUP BY month, day;".format(year, lat, lon)
+    query = "SELECT month, day, AVG(tmpf) AS tmpf FROM date_by_location WHERE lat = {} AND lon = {} AND year = {} GROUP BY month, day;".format(lat, lon, year)
     print(query)
     results = cluster.execute(query)
 
