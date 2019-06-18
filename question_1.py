@@ -53,7 +53,7 @@ def get_all(lon, lat):
 if __name__ == '__main__':
     import sys
     if len(sys.argv) != 4:
-        raise RuntimeError("Utiliser ce programme avec 3 arguments : l'année, la longitude et la latitude.\n\rex:\tquestion_1.py 2001 13.3088 52.5644")
+        raise RuntimeError("Utiliser ce programme avec 3 arguments : l'année, la longitude et la latitude.\n\rex:\tquestion_1.py 2011 13.3088 52.5644")
 
     year = sys.argv[1]
     lon = float(sys.argv[2])
@@ -61,5 +61,8 @@ if __name__ == '__main__':
 
     data = get_all(lon, lat)
     plt.plot(data['avg'])
-    plt.plot(data[year])
+    try:
+        plt.plot(data[year])
+    except KeyError:
+        raise KeyError("L'année '"+year+"' n'existe pas.")
     plt.savefig('temperatures.png')
