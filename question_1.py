@@ -33,13 +33,13 @@ def get_all(lon, lat):
 
     for year in data.keys():
         data[year] = get_points(year, lon, lat)
-    
+
     for i in range(366):
         tmp_len = 0
         tmp_sum = 0
 
         for year in data.keys():
-            if data[year][i] != None:
+            if data[year][i] is not None:
                 tmp_len = tmp_len + 1
                 tmp_sum = tmp_sum + data[year][i]
 
@@ -50,7 +50,16 @@ def get_all(lon, lat):
     return data
 
 
-data = get_all(13.3088, 52.5644)
-plt.plot(data['avg'])
-plt.plot(data['2011'])
-plt.savefig('temperatures.png')
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) != 4:
+        raise RuntimeError("Utiliser ce programme avec 3 arguments : l'année, la longitude et la latitude.\n\rex:\tquestion_1.py 2001 13.3088 52.5644")
+
+    year = sys.argv[1]
+    lon = float(sys.argv[2])
+    lat = float(sys.argv[3])
+
+    data = get_all(lon, lat)
+    plt.plot(data['avg'])
+    plt.plot(data[year])
+    plt.savefig('temperatures.png')
