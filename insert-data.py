@@ -12,6 +12,6 @@ for row in data:
     i = i + 1
     print(i)
     row = split_daytime(row)
-    query = format_insert_query("date_by_location", row)
+    query = format_insert_query("data_by_datetime", row)
 
     ks.execute(query)

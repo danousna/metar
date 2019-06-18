@@ -79,5 +79,5 @@ CREATE TABLE IF NOT EXISTS data_by_datetime (
     feel decimal,
     metar text,
 
-    PRIMARY KEY ((year, month), day, hour, minute, second, lat, lon, station)
+    PRIMARY KEY ((year, month), day, hour, lat, lon)
 );

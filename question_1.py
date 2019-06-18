@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
-import numpy as np
 from datetime import datetime
 from cassandra.cluster import Cluster
-from statistics import mean
 
 
 cluster = Cluster(['localhost'])
