@@ -9,9 +9,9 @@ cluster = Cluster(['localhost'])
 cluster = cluster.connect('chembise_metar_1_12')
 
 
-def get_points(year):
+def get_points(year, lon, lat):
     global cluster
-    query = "SELECT month, day, AVG(tmpf) AS tmpf FROM date_by_location WHERE lat = 52.5644 AND lon = 13.3088 AND year = {} GROUP BY month, day;".format(year)
+    query = "SELECT month, day, AVG(tmpf) AS tmpf FROM date_by_location WHERE lat = {} AND lon = {} AND year = {} GROUP BY month, day;".format(year, lat, lon)
     print(query)
     results = cluster.execute(query)
 
@@ -27,12 +27,12 @@ def get_points(year):
     return data
 
 
-def get_all():
+def get_all(lon, lat):
     data = { '2009': [], '2010': [], '2011': [], '2012': [], '2013': [], '2014': [], '2015': [], '2016': [], '2017': [], '2018': [] }
     avg = [None for i in range(366)]
 
     for year in data.keys():
-        data[year] = get_points(year)
+        data[year] = get_points(year, lon, lat)
     
     for i in range(366):
         tmp_len = 0
@@ -48,9 +48,9 @@ def get_all():
     data['avg'] = avg
 
     return data
-    
 
-data = get_all()
+
+data = get_all(13.3088, 52.5644)
 plt.plot(data['avg'])
 plt.plot(data['2011'])
 plt.savefig('temperatures.png')
