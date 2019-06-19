@@ -1,10 +1,14 @@
-import numpy as np
+import glob
+from pykrige.ok import OrdinaryKriging
+from pykrige.kriging_tools import write_asc_grid
+import pykrige.kriging_tools as kt
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap, cm
+import numpy as np
+from mpl_toolkits.basemap import Basemap
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.patches import Path, PathPatch
 from datetime import datetime
 from cassandra.cluster import Cluster
-from scipy.interpolate import griddata
-
 
 cluster = Cluster(['localhost'])
 cluster = cluster.connect('chembise_metar_1_12')
@@ -34,7 +38,7 @@ def get_points(dt):
         data.append({
             'lat': floatNone(result.lat),
             'lon': floatNone(result.lon),
-            'tmpf': floatNone(result.tmpf),
+            'tmpf': float((result.tmpf - 32) * 5/9),
             'relh': floatNone(result.relh),
             'sknt': floatNone(result.sknt),
             'p01i': floatNone(result.p01i),
@@ -46,36 +50,66 @@ def get_points(dt):
 
     return data
 
-data = get_points(datetime(2015, 3, 15, 12))
+data = get_points(datetime(2015, 1, 15, 14))
 
-lats = sorted([item['lat'] for item in data])
-lons = sorted([item['lon'] for item in data])
-tmpf = []
-
-for i, lat in enumerate(lats):
-    tmpf.append([])
-    for j, lon in enumerate(lons):
-        tmpf[i].append(np.nan)
-        for item in data:
-            if item['lat'] == lat and item['lon'] == lon:
-                tmpf[i][j] = item['tmpf']
+lons = np.array([item['lon'] for item in data])
+lats = np.array([item['lat'] for item in data])
+tmpf = np.array([item['tmpf'] for item in data])
 
 print(tmpf)
 
-m = Basemap(projection = 'mill',
-            llcrnrlat = 46.90,
-            llcrnrlon = 5.75,
-            urcrnrlat = 55,
-            urcrnrlon = 15.21,
-            resolution = 'l')
+grid_lon = np.arange(lons.min(), lons.max(), 0.5)
+grid_lat = np.arange(lats.min(), lats.max(), 0.5)
 
+OK = OrdinaryKriging(lons, lats, tmpf, variogram_model='gaussian', verbose=True, enable_plotting=False, nlags=20)
+z1, ss1 = OK.execute('grid', grid_lon, grid_lat)
+
+xintrp, yintrp = np.meshgrid(grid_lon, grid_lat)
+fix, ax = plt.subplots(figsize=(10, 10))
+
+m = Basemap(llcrnrlon = lons.min() - 0.3,
+            llcrnrlat = lats.min() - 0.3,
+            urcrnrlon = lons.max() + 0.3,
+            urcrnrlat = lats.max() + 0.3,
+            projection = 'merc',
+            resolution = 'h',
+            area_thresh = 1000,
+            ax = ax)
 m.drawcoastlines()
 m.drawcountries()
-m.drawstates()
 
-x, y = m(*np.meshgrid(lons, lats))
+x, y = m(xintrp, yintrp)
+ln, lt = m(lons, lats)
+cs = ax.contourf(x, y, z1, np.linspace(-5, 30, 35), extend='both', cmap='jet')
+cbar = m.colorbar(cs, location='right', pad='7%')
 
-m.pcolormesh(x, y, tmpf, shading='flat', cmap=plt.cm.jet)
-m.colorbar(location='right')
+
+# # Limits of map
+# x0, x1 = ax.get_xlim()
+# y0, y1 = ax.get_ylim()
+# map_edges = np.array([[x0, y0], [x1, y0], [x1, y1], [x0, y1]])
+# # Get all polygons used to draw the countries
+# polys = [p.boundary for p in m.landpolygons]
+
+# # Combine with map edge
+# polys = [map_edges] + polys[:]
+
+# # Create a PathPatch
+# codes = [
+#     [Path.MOVETO] + [Path.LINETO for p in p[1:]]
+#     for p in polys
+# ]
+
+# polys_lin = [v for p in polys for v in p]
+# codes_lin = [c for c in codes]
+
+# path = Path(polys_lin, codes_lin)
+# patch = PathPatch(path, facecolor='white', lw=0)
+
+# ax.add_patch(patch)
+
+for item in data:
+    x, y = m(item['lon'], item['lat'])
+    m.plot(x, y, 'bo', markersize=10)
 
 plt.savefig('map.png')

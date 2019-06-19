@@ -10,7 +10,8 @@ data = generator.loadata()
 i = 0
 for row in data:
     i = i + 1
-    print(i)
+    if (i % 1000) == 0:
+        print(i)
     row = split_daytime(row)
     query = format_insert_query("data_by_datetime", row)
 
