@@ -3,12 +3,27 @@ import numpy as np
 from datetime import datetime
 from cassandra.cluster import Cluster
 
-from statistics import mean
 from haversine import haversine
 
 cluster = Cluster(['localhost'])
 cluster = cluster.connect('chembise_metar_1_12')
 
+
+def get_nearest_station(lat, lon):
+    global cluster
+    query = "select distinct lat, lon from date_by_location;"
+    stations = cluster.execute(query)
+
+    nearest_station = None
+    min_dist = None
+    for station in stations:
+        dist = haversine((lat, lon), (station.lat, station.lon))
+
+        if nearest_station is None or min_dist > dist:
+            nearest_station = station
+            min_dist = dist
+
+    return nearest_station
 
 
 def get_points(year, lat, lon):
