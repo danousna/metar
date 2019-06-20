@@ -60,9 +60,9 @@ def get_points_by_day(year, lat, lon):
     return data
 
 
-def get_points_by_month(year, lat, lon):
+def get_points_by_month(year, lat, lon, indicator):
     global cluster
-    query = "SELECT month, AVG(tmpf) AS tmpf FROM date_by_location WHERE lat = {} AND lon = {} AND year = {} GROUP BY month;".format(lat, lon, year)
+    query = "SELECT month, AVG({}) AS data FROM date_by_location WHERE lat = {} AND lon = {} AND year = {} GROUP BY month;".format(indicator, lat, lon, year)
     print(query)
     results = cluster.execute(query)
 
@@ -70,14 +70,19 @@ def get_points_by_month(year, lat, lon):
 
     for result in results:
         try:
-            data[result.month - 1]['value'] = float((result.tmpf - 32) * 5/9)  # Convert to Celsius
+            if indicator == 'tmpf':
+                value = float((result.data - 32) * 5/9)  # Convert to Celsius
+            else:
+                value = result.data
+
+            data[result.month - 1]['value'] = value
         except IndexError:
-            print("Could not insert month {} with value {}".format(result.month, (result.tmpf - 32) * 5/9))
+            print("Could not insert month {} with value {}".format(result.month, result.data))
 
     return data
 
 
-def get_all(lat, lon, grain = 'day'):
+def get_all(lat, lon, indicator, grain = 'day'):
     data = { '2009': [], '2010': [], '2011': [], '2012': [], '2013': [], '2014': [], '2015': [], '2016': [], '2017': [], '2018': [] }
     n = 366
     if grain == 'month':
@@ -88,7 +93,7 @@ def get_all(lat, lon, grain = 'day'):
     station = get_nearest_station(lat, lon)
     for year in data.keys():
         if grain == 'month':
-            data[year] = get_points_by_month(year, station.lat, station.lon)
+            data[year] = get_points_by_month(year, station.lat, station.lon, indicator)
         else:
             data[year] = get_points_by_day(year, station.lat, station.lon)
 
@@ -110,20 +115,39 @@ def get_all(lat, lon, grain = 'day'):
 
 if __name__ == '__main__':
     import sys
-    if len(sys.argv) != 4:
-        print("\nUtiliser ce programme avec 3 arguments : l'année, la latitude et la longitude.\n\rex:\tquestion_1.py 2011 52.5644 13.3088 \n")
+    if len(sys.argv) != 5:
+        print("\nUtiliser ce programme avec 4 arguments : l'année, la latitude et la longitude et l'indicateur.")
+        print("ex: question_1.py 2011 52.5644 13.3088 tmpf \n")
         exit()
 
     year = sys.argv[1]
     lon = float(sys.argv[2])
     lat = float(sys.argv[3])
+    indicator = str(sys.argv[4])
 
-    data = get_all(lat, lon, grain = 'month')
+    data = get_all(lat, lon, indicator, grain = 'month')
     avg_curve = plt.plot([item['name'] for item in data['avg']], [item['value'] for item in data['avg']])
     try:
         year_curve = plt.plot([item['name'] for item in data[year]], [item['value'] for item in data[year]])
     except KeyError:
         raise KeyError("L'année '"+year+"' n'existe pas.")
+
+    labels = {
+        'tmpf': {
+            'ylabel': '°C',
+            'title': 'Températures moyennes par mois sur l\'année {}'.format(year),
+        },
+        'relh': {
+            'ylabel': '%',
+            'title': 'Humidité moyenne par mois sur l\'année {}'.format(year),
+        },
+        'p01i': {
+            'ylabel': 'Pouces',
+            'title': 'Précipations sur 1 heure, moyennées par mois sur l\'année {}'.format(year),
+        }
+    }
+
+    plt.ylabel(labels[indicator]['ylabel'])
     plt.legend((avg_curve[0], year_curve[0]), ('2009-2018', year))
-    plt.title('Températures moyennes par mois sur l\'année {}'.format(year))
-    plt.savefig('temperatures.png')
+    plt.title(labels[indicator]['title'])
+    plt.savefig('{}.png'.format(indicator))
