@@ -9,6 +9,22 @@ cluster = Cluster(['localhost'])
 cluster = cluster.connect('chembise_metar_1_12')
 
 
+def month_list():
+    return [
+        {'name': 'janv', 'value': None},
+        {'name': 'févr', 'value': None},
+        {'name': 'mars', 'value': None},
+        {'name': 'avr', 'value': None},
+        {'name': 'mai', 'value': None},
+        {'name': 'juin', 'value': None},
+        {'name': 'juill', 'value': None},
+        {'name': 'août', 'value': None},
+        {'name': 'sept', 'value': None},
+        {'name': 'oct', 'value': None},
+        {'name': 'nov', 'value': None},
+        {'name': 'déc', 'value': None},
+    ]  
+
 def get_nearest_station(lat, lon):
     global cluster
     query = "select distinct lat, lon from date_by_location;"
@@ -26,42 +42,66 @@ def get_nearest_station(lat, lon):
     return nearest_station
 
 
-def get_points(year, lat, lon):
+def get_points_by_day(year, lat, lon):
     global cluster
     query = "SELECT month, day, AVG(tmpf) AS tmpf FROM date_by_location WHERE lat = {} AND lon = {} AND year = {} GROUP BY month, day;".format(lat, lon, year)
     print(query)
     results = cluster.execute(query)
 
-    data = [None for i in range(366)]
+    data = [{'name': i, 'value': None} for i in range(366)]
 
     for result in results:
         day = datetime.strptime(str(year) + '-' + str(result.month) + '-' + str(result.day), '%Y-%m-%d').timetuple().tm_yday
         try:
-            data[day - 1] = float((result.tmpf - 32) * 5/9)  # Convert to Celsius
+            data[day - 1]['value'] = float((result.tmpf - 32) * 5/9)  # Convert to Celsius
         except IndexError:
             print("Could not insert day {} with value {}".format(day, (result.tmpf - 32) * 5/9))
 
     return data
 
 
-def get_all(lat, lon):
+def get_points_by_month(year, lat, lon):
+    global cluster
+    query = "SELECT month, AVG(tmpf) AS tmpf FROM date_by_location WHERE lat = {} AND lon = {} AND year = {} GROUP BY month;".format(lat, lon, year)
+    print(query)
+    results = cluster.execute(query)
+
+    data = month_list()
+
+    for result in results:
+        try:
+            data[result.month - 1]['value'] = float((result.tmpf - 32) * 5/9)  # Convert to Celsius
+        except IndexError:
+            print("Could not insert month {} with value {}".format(result.month, (result.tmpf - 32) * 5/9))
+
+    return data
+
+
+def get_all(lat, lon, grain = 'day'):
     data = { '2009': [], '2010': [], '2011': [], '2012': [], '2013': [], '2014': [], '2015': [], '2016': [], '2017': [], '2018': [] }
-    avg = [None for i in range(366)]
+    n = 366
+    if grain == 'month':
+        n = 12
+
+    avg = month_list()
 
     station = get_nearest_station(lat, lon)
     for year in data.keys():
-        data[year] = get_points(year, station.lat, station.lon)
+        if grain == 'month':
+            data[year] = get_points_by_month(year, station.lat, station.lon)
+        else:
+            data[year] = get_points_by_day(year, station.lat, station.lon)
 
-    for i in range(366):
+    for i in range(n):
         tmp_len = 0
         tmp_sum = 0
 
         for year in data.keys():
-            if data[year][i] is not None:
+            if data[year][i]['value'] is not None:
                 tmp_len = tmp_len + 1
-                tmp_sum = tmp_sum + data[year][i]
+                tmp_sum = tmp_sum + data[year][i]['value']
 
-        avg[i] = tmp_sum / tmp_len
+        avg[i]['value'] = tmp_sum / tmp_len
 
     data['avg'] = avg
 
@@ -71,16 +111,19 @@ def get_all(lat, lon):
 if __name__ == '__main__':
     import sys
     if len(sys.argv) != 4:
-        raise RuntimeError("Utiliser ce programme avec 3 arguments : l'année, la latitude et la longitude.\n\rex:\tquestion_1.py 2011 52.5644 13.3088")
+        print("\nUtiliser ce programme avec 3 arguments : l'année, la latitude et la longitude.\n\rex:\tquestion_1.py 2011 52.5644 13.3088 \n")
+        exit()
 
     year = sys.argv[1]
     lon = float(sys.argv[2])
     lat = float(sys.argv[3])
 
-    data = get_all(lat, lon)
-    plt.plot(data['avg'])
+    data = get_all(lat, lon, grain = 'month')
+    avg_curve = plt.plot([item['name'] for item in data['avg']], [item['value'] for item in data['avg']])
     try:
-        plt.plot(data[year])
+        year_curve = plt.plot([item['name'] for item in data[year]], [item['value'] for item in data[year]])
     except KeyError:
         raise KeyError("L'année '"+year+"' n'existe pas.")
+    plt.legend((avg_curve[0], year_curve[0]), ('2009-2018', year))
+    plt.title('Températures moyennes par mois sur l\'année {}'.format(year))
     plt.savefig('temperatures.png')
