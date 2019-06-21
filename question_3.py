@@ -2,6 +2,7 @@ from cassandra.cluster import Cluster
 from cassandra.query import tuple_factory
 import numpy as np
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 
@@ -52,7 +53,7 @@ def clustering(values):
     return kmeans
 
 
-def kmeans_missing(X, n_clusters, max_iter=10):
+def kmeans_missing(X, n_clusters, max_iter=10, random_state=None):
     """This is from SO : https://stackoverflow.com/questions/35611465/python-scikit-learn-clustering-with-missing-data
     Perform K-Means clustering on data with missing values.
 
@@ -83,10 +84,10 @@ def kmeans_missing(X, n_clusters, max_iter=10):
             # faster and makes it easier to check convergence (since labels
             # won't be permuted on every iteration), but might be more prone to
             # getting stuck in local minima.
-            cls = KMeans(n_clusters, init=prev_centroids)
+            cls = KMeans(n_clusters, init=prev_centroids, random_state=random_state)
         else:
             # do multiple random initializations in parallel
-            cls = KMeans(n_clusters, n_jobs=-1)
+            cls = KMeans(n_clusters, n_jobs=-1, random_state=random_state)
 
         # perform clustering on the filled-in data
         labels = cls.fit_predict(X_hat)
@@ -102,7 +103,12 @@ def kmeans_missing(X, n_clusters, max_iter=10):
         prev_labels = labels
         prev_centroids = cls.cluster_centers_
 
-    return labels, centroids, X_hat
+    return cls, labels, X_hat
+
+
+def pca(X):
+    pca = PCA(n_components=2)
+    pca.fit(X)
 
 
 if __name__ == '__main__':
@@ -116,9 +122,9 @@ if __name__ == '__main__':
     year_end = int(sys.argv[2])
 
     print("1/3 : Aggregation over period {} - {}".format(year_start, year_end))
-    stations, station_values = aggregate_by_stations(year_start, year_start)
+    stations, station_values = aggregate_by_stations(year_start, year_end)
     print("2/3 : Running K-means")
-    labels, centroids, X_hat = kmeans_missing(station_values, 5)
+    clustering, labels, X_hat = kmeans_missing(station_values, 6)
 
     print("3/3 : Plot of the map")
     # Plot the map
