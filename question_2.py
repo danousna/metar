@@ -38,7 +38,7 @@ def get_points(dt):
         data.append({
             'lat': floatNone(result.lat),
             'lon': floatNone(result.lon),
-            'tmpf': float((result.tmpf - 32) * 5/9),
+            'tmpf': float((result.tmpf - 32) * 5/9) if result.tmpf != None else None,
             'relh': floatNone(result.relh),
             'sknt': floatNone(result.sknt),
             'p01i': floatNone(result.p01i),
@@ -50,66 +50,86 @@ def get_points(dt):
 
     return data
 
-data = get_points(datetime(2015, 1, 15, 14))
 
-lons = np.array([item['lon'] for item in data])
-lats = np.array([item['lat'] for item in data])
-tmpf = np.array([item['tmpf'] for item in data])
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) != 6:
+        print("\nUtiliser ce programme avec 5 arguments : l'année, le mois, le jour, l'heure et un indicateur.")
+        print("ex: question_2.py 2015 1 15 14 tmpf \n")
+        exit()
 
-print(tmpf)
+    year = int(sys.argv[1])
+    month = int(sys.argv[2])
+    day = int(sys.argv[3])
+    hour = int(sys.argv[4])
+    indicator = str(sys.argv[5])
 
-grid_lon = np.arange(lons.min(), lons.max(), 0.5)
-grid_lat = np.arange(lats.min(), lats.max(), 0.5)
+    data = get_points(datetime(year, month, day, hour))
 
-OK = OrdinaryKriging(lons, lats, tmpf, variogram_model='gaussian', verbose=True, enable_plotting=False, nlags=20)
-z1, ss1 = OK.execute('grid', grid_lon, grid_lat)
+    # Transform to np.array
+    lons = np.array([item['lon'] for item in data])
+    lats = np.array([item['lat'] for item in data])
+    indicators = {
+        'tmpf': np.array([item['tmpf'] for item in data]),
+        'relh': np.array([item['relh'] for item in data]),
+        'p01i': np.array([item['p01i'] for item in data])
+    }
 
-xintrp, yintrp = np.meshgrid(grid_lon, grid_lat)
-fix, ax = plt.subplots(figsize=(10, 10))
+    # Make grid of lat and lons
+    grid_lon = np.arange(lons.min(), lons.max(), 0.5)
+    grid_lat = np.arange(lats.min(), lats.max(), 0.5)
 
-m = Basemap(llcrnrlon = lons.min() - 0.3,
-            llcrnrlat = lats.min() - 0.3,
-            urcrnrlon = lons.max() + 0.3,
-            urcrnrlat = lats.max() + 0.3,
-            projection = 'merc',
-            resolution = 'h',
-            area_thresh = 1000,
-            ax = ax)
-m.drawcoastlines()
-m.drawcountries()
+    # Krigging
+    OK = OrdinaryKriging(lons, lats, indicators[indicator], variogram_model='gaussian', verbose=True, enable_plotting=False, nlags=20)
+    z1, ss1 = OK.execute('grid', grid_lon, grid_lat)
 
-x, y = m(xintrp, yintrp)
-ln, lt = m(lons, lats)
-cs = ax.contourf(x, y, z1, np.linspace(-5, 30, 35), extend='both', cmap='jet')
-cbar = m.colorbar(cs, location='right', pad='7%')
+    xintrp, yintrp = np.meshgrid(grid_lon, grid_lat)
+    fix, ax = plt.subplots(figsize=(10, 10))
 
+    m = Basemap(llcrnrlon = lons.min() - 0.3,
+                llcrnrlat = lats.min() - 0.3,
+                urcrnrlon = lons.max() + 0.3,
+                urcrnrlat = lats.max() + 0.3,
+                projection = 'merc',
+                resolution = 'h',
+                area_thresh = 1000,
+                ax = ax)
+    m.drawcoastlines()
+    m.drawcountries()
 
-# # Limits of map
-# x0, x1 = ax.get_xlim()
-# y0, y1 = ax.get_ylim()
-# map_edges = np.array([[x0, y0], [x1, y0], [x1, y1], [x0, y1]])
-# # Get all polygons used to draw the countries
-# polys = [p.boundary for p in m.landpolygons]
+    labels = {
+        'tmpf': {
+            'min': -5,
+            'max': 30,
+            'title': 'Carte des températures en °C',
+        },
+        'relh': {
+            'min': 0,
+            'max': 100,
+            'title': 'Carte l\'humidité en \%',
+        },
+        'p01i': {
+            'min': 0,
+            'max': 100,
+            'title': 'Précipations en pouces',
+        }
+    }
 
-# # Combine with map edge
-# polys = [map_edges] + polys[:]
+    x, y = m(xintrp, yintrp)
+    ln, lt = m(lons, lats)
+    cs = ax.contourf(x, y, z1, np.linspace(
+        labels[indicator]['min'], 
+        labels[indicator]['max'], 
+        labels[indicator]['min'] + abs(labels[indicator]['max'])
+    ), extend='both', cmap='jet')
+    cbar = m.colorbar(cs, location='right', pad='7%')
 
-# # Create a PathPatch
-# codes = [
-#     [Path.MOVETO] + [Path.LINETO for p in p[1:]]
-#     for p in polys
-# ]
+    # Plot station markers
+    for item in data:
+        x, y = m(item['lon'], item['lat'])
+        m.plot(x, y, 'bo', markersize=10)
 
-# polys_lin = [v for p in polys for v in p]
-# codes_lin = [c for c in codes]
-
-# path = Path(polys_lin, codes_lin)
-# patch = PathPatch(path, facecolor='white', lw=0)
-
-# ax.add_patch(patch)
-
-for item in data:
-    x, y = m(item['lon'], item['lat'])
-    m.plot(x, y, 'bo', markersize=10)
-
-plt.savefig('map.png')
+    # plt.ylabel(labels[indicator]['ylabel'])
+    # plt.legend((avg_curve[0], year_curve[0]), ('2009-2018', year))
+    plt.title(labels[indicator]['title'] + ' au {}/{}/{}'.format(day, month, year))
+    plt.savefig('map.png')

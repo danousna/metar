@@ -13,6 +13,6 @@ for row in data:
     if (i % 1000) == 0:
         print(i)
     row = split_daytime(row)
-    query = format_insert_query("data_by_datetime", row)
+    query = format_insert_query("date_by_location", row)
 
     ks.execute(query)

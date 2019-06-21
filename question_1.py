@@ -25,6 +25,7 @@ def month_list():
         {'name': 'déc', 'value': None},
     ]  
 
+
 def get_nearest_station(lat, lon):
     global cluster
     query = "select distinct lat, lon from date_by_location;"
@@ -150,4 +151,4 @@ if __name__ == '__main__':
     plt.ylabel(labels[indicator]['ylabel'])
     plt.legend((avg_curve[0], year_curve[0]), ('2009-2018', year))
     plt.title(labels[indicator]['title'])
-    plt.savefig('{}.png'.format(indicator))
+    plt.savefig('curve.png')
