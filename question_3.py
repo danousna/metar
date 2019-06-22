@@ -10,12 +10,13 @@ cluster = Cluster(['localhost'])
 cluster = cluster.connect('chembise_metar_1_12')
 
 
-def aggregate_by_stations(year_start, year_end, month_start=None, month_end=None):
+def aggregate_by_stations(year_start, year_end, month_start=None, month_end=None, metrics=None):
     query_stations = "select distinct lat, lon from date_by_location"
     stations = cluster.execute(query_stations)
 
     station_values = []
-    metrics = ['tmpf', 'dwpf', 'relh', 'drct', 'sknt', 'p01i', 'alti', 'mslp', 'vsby', 'gust', 'skyl1', 'skyl2',
+    if metrics is None:
+        metrics = ['tmpf', 'dwpf', 'relh', 'drct', 'sknt', 'p01i', 'alti', 'mslp', 'vsby', 'gust', 'skyl1', 'skyl2',
                'skyl3', 'skyl4', 'ice_accretion_1hr', 'ice_accretion_3hr', 'ice_accretion_6hr', 'peak_wind_gust',
                'peak_wind_drct', 'feel']
 
@@ -53,12 +54,6 @@ def aggregate_by_stations(year_start, year_end, month_start=None, month_end=None
     print("{} stations".format(len(stations_list)))
 
     return stations_list, station_values
-
-#def aggregate_by_stations_2(year_start, year_end):
-    #spark.read \
-    #    .format("org.apache.spark.sql.cassandra") \
-    #    .options(table="kv", keyspace="test") \
-    #    .load().show()
 
 def clustering(values):
     kmeans = KMeans(n_clusters=4, random_state=0).fit(values)
@@ -119,9 +114,44 @@ def kmeans_missing(X, n_clusters, max_iter=10, random_state=None):
     return cls, labels, X_hat
 
 
-def pca(X):
-    pca = PCA(n_components=2)
-    pca.fit(X)
+def main(year_start, year_end, month_start=None, month_end=None, n_clusters=6, metrics=None):
+    """
+    Clusterise l'espace et produit une map
+    :param year_start: année de début de la période
+    :param year_end: année de fin de la période
+    :param month_start: mois de début de la période optionnel
+    :param month_end: mois de fin de la période optionnel
+    :param n_clusters: nombre de clusters à identifier (par défaut 6)
+    :param metrics: list de métrique à considérer (par défaut toute)
+    """
+    print("1/3 : Aggregation over period {} - {}".format(year_start, year_end))
+    stations, station_values = aggregate_by_stations(year_start, year_end, month_start=month_start, month_end=month_end, metrics=metrics)
+    print("2/3 : Running K-means")
+    clustering, labels, X_hat = kmeans_missing(station_values, n_clusters)
+
+    print("3/3 : Plot of the map")
+    # Plot the map
+    lons = np.array([float(station.lon) for station in stations])
+    lats = np.array([float(station.lat) for station in stations])
+
+    fix, ax = plt.subplots(figsize=(10, 10))
+    m = Basemap(llcrnrlon=lons.min() - 0.3,
+                llcrnrlat=lats.min() - 0.3,
+                urcrnrlon=lons.max() + 0.3,
+                urcrnrlat=lats.max() + 0.3,
+                projection='merc',
+                resolution='h',
+                area_thresh=1000,
+                ax=ax)
+    m.drawcoastlines()
+    m.drawcountries()
+
+    colors = ['C' + str(label) for label in labels]
+    for index, station in enumerate(stations):
+        x, y = m(float(station.lon), float(station.lat))
+        m.plot(x, y, 'bo', markersize=10, c=colors[index])
+
+    plt.savefig('map-cluster.png')
 
 
 if __name__ == '__main__':
@@ -143,31 +173,4 @@ if __name__ == '__main__':
         year_end = int(sys.argv[4])
         month_end = int(sys.argv[5])
 
-    print("1/3 : Aggregation over period {} - {}".format(year_start, year_end))
-    stations, station_values = aggregate_by_stations(year_start, year_end, month_start=month_start, month_end=month_end)
-    print("2/3 : Running K-means")
-    clustering, labels, X_hat = kmeans_missing(station_values, n_clusters)
-
-    print("3/3 : Plot of the map")
-    # Plot the map
-    lons = np.array([float(station.lon) for station in stations])
-    lats = np.array([float(station.lat) for station in stations])
-
-    fix, ax = plt.subplots(figsize=(10, 10))
-    m = Basemap(llcrnrlon=lons.min() - 0.3,
-                llcrnrlat=lats.min() - 0.3,
-                urcrnrlon=lons.max() + 0.3,
-                urcrnrlat=lats.max() + 0.3,
-                projection='merc',
-                resolution='h',
-                area_thresh=1000,
-                ax=ax)
-    m.drawcoastlines()
-    m.drawcountries()
-
-    colors = ['C'+str(label) for label in labels]
-    for index, station in enumerate(stations):
-        x, y = m(float(station.lon), float(station.lat))
-        m.plot(x, y, 'bo', markersize=10, c=colors[index])
-
-    plt.savefig('map-cluster.png')
+    main(year_start, year_end, month_start=month_start, month_end=month_end, n_clusters=n_clusters)
