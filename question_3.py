@@ -10,8 +10,8 @@ cluster = Cluster(['localhost'])
 cluster = cluster.connect('chembise_metar_1_12')
 
 
-def aggregate_by_stations(year_start, year_end):
-    query_stations = "select distinct lat, lon from date_by_location;"
+def aggregate_by_stations(year_start, year_end, month_start=None, month_end=None):
+    query_stations = "select distinct lat, lon from date_by_location"
     stations = cluster.execute(query_stations)
 
     station_values = []
@@ -25,27 +25,40 @@ def aggregate_by_stations(year_start, year_end):
 
     cluster.row_factory = tuple_factory
 
+    if month_start is not None and month_end is not None:
+        where_clause = "(year, month) >= ({}, {}) and (year, month) <= ({}, {})".format(year_start, month_start, year_end, month_end)
+    else:
+        where_clause = "(year >= {} and year <= {})".format(year_start, year_end)
+
     stations_list = []
     for station in stations:
-        query = "SELECT {}, {}, {} from date_by_location where year >= {} and year <= {} and lat = {} and lon = {}".format(
-            avg_select, min_select, max_select, year_start, year_end, station.lat, station.lon)
+        query = "SELECT COUNT(*), {}, {}, {} from date_by_location where {} and lat = {} and lon = {}".format(
+            avg_select, min_select, max_select, where_clause, station.lat, station.lon)
+
         results = cluster.execute(query)
+        aggregated = results.one()
 
-        stations_list.append(station)
+        if aggregated[0] > 0: # is count(*) > 0 ?
+            stations_list.append(station)
 
-        values = ()
-        for itup in results.one():
-            if itup is None:
-                values += (np.nan,)
-            else:
-                values += (float(itup),)
+            values = ()
+            for itup in aggregated[1:]: # because first value is count(*)
+                if itup is None:
+                    values += (np.nan,)
+                else:
+                    values += (float(itup),)
 
-        station_values.append(values)
+            station_values.append(values)
 
     print("{} stations".format(len(stations_list)))
 
     return stations_list, station_values
 
+#def aggregate_by_stations_2(year_start, year_end):
+    #spark.read \
+    #    .format("org.apache.spark.sql.cassandra") \
+    #    .options(table="kv", keyspace="test") \
+    #    .load().show()
 
 def clustering(values):
     kmeans = KMeans(n_clusters=4, random_state=0).fit(values)
@@ -114,17 +127,26 @@ def pca(X):
 if __name__ == '__main__':
     import sys
 
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4 and len(sys.argv) != 6:
         raise RuntimeError(
-            "Utiliser ce programme avec 2 arguments : l'année de début et l'année de fin.\n\rex:\tquestion_3.py 2011 2012")
+            "Utiliser ce programme avec 3 ou 5 arguments : le nombre de clusters, l'année de début et l'année de fin.\nex:\tquestion_3.py 3 2011 10 2012 6\nou:\tquestion_3.py 6 2011 2012")
 
-    year_start = int(sys.argv[1])
-    year_end = int(sys.argv[2])
+    n_clusters = int(sys.argv[1])
+    if len(sys.argv) == 3:
+        year_start = int(sys.argv[2])
+        year_end = int(sys.argv[3])
+        month_start = None
+        month_end = None
+    else:
+        year_start = int(sys.argv[2])
+        month_start = int(sys.argv[3])
+        year_end = int(sys.argv[4])
+        month_end = int(sys.argv[5])
 
     print("1/3 : Aggregation over period {} - {}".format(year_start, year_end))
-    stations, station_values = aggregate_by_stations(year_start, year_end)
+    stations, station_values = aggregate_by_stations(year_start, year_end, month_start=month_start, month_end=month_end)
     print("2/3 : Running K-means")
-    clustering, labels, X_hat = kmeans_missing(station_values, 6)
+    clustering, labels, X_hat = kmeans_missing(station_values, n_clusters)
 
     print("3/3 : Plot of the map")
     # Plot the map

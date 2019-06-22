@@ -9,9 +9,11 @@ import numpy as np
 from question_3 import *
 
 year_start = 2011
-year_end = 2013
+month_start=11
+year_end = 2012
+month_end=2
 
-stations, station_values = aggregate_by_stations(year_start, year_end)
+stations, station_values = aggregate_by_stations(year_start, year_end, month_start, month_end)
 
 print(__doc__)
 
