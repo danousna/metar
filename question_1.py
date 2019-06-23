@@ -37,8 +37,8 @@ def get_nearest_station(lat, lon):
         dist = haversine((lat, lon), (station.lat, station.lon))
 
         if nearest_station is None or min_dist > dist:
-            nearest_station = station
             min_dist = dist
+            nearest_station = station
 
     return nearest_station
 
@@ -122,8 +122,8 @@ if __name__ == '__main__':
         exit()
 
     year = sys.argv[1]
-    lon = float(sys.argv[2])
-    lat = float(sys.argv[3])
+    lat = float(sys.argv[2])
+    lon = float(sys.argv[3])
     indicator = str(sys.argv[4])
 
     data = get_all(lat, lon, indicator, grain = 'month')
